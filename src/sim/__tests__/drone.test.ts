@@ -87,6 +87,15 @@ describe("drone state machine", () => {
     expect(orbitTime).toBeGreaterThanOrEqual(ORBIT_DURATION_S);
   });
 
+  it("resolves inconclusive when the contact has departed the snapshot area", () => {
+    const drone = idleDrone();
+    const track = makeTrack(350, 100);
+    taskDrone(drone, track);
+    // truthNear returns null: nothing observable remains at the snapshot point.
+    const resolved = runUntil(drone, [track], null, (r) => r.resolved !== undefined);
+    expect(resolved?.resolved?.resolution).toBe("inconclusive");
+  });
+
   it("confirms a decoy when ground truth at the orbit point is a decoy", () => {
     const drone = idleDrone();
     const track = makeTrack(350, 100);

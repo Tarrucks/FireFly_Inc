@@ -169,12 +169,20 @@ export class SimEngine {
     if (result.resolved) {
       const track = this.tracks.find((tr) => tr.id === result.resolved?.trackId);
       if (track) {
-        track.resolution = result.resolved.resolution;
-        updateThreat(track, this.simTime);
-        if (result.resolved.resolution === "confirmed-decoy") {
-          this.pushEvent("DRONE", "success", `${track.id} CONFIRMED DECOY — disagreement signature verified, band GREEN`);
+        if (result.resolved.resolution === "inconclusive") {
+          this.pushEvent(
+            "DRONE",
+            "warn",
+            `${track.id} verification inconclusive — contact departed the snapshot area; band unchanged`,
+          );
         } else {
-          this.pushEvent("DRONE", "critical", `${track.id} CONFIRMED HOSTILE — band RED`);
+          track.resolution = result.resolved.resolution;
+          updateThreat(track, this.simTime);
+          if (result.resolved.resolution === "confirmed-decoy") {
+            this.pushEvent("DRONE", "success", `${track.id} CONFIRMED DECOY — disagreement signature verified, band GREEN`);
+          } else {
+            this.pushEvent("DRONE", "critical", `${track.id} CONFIRMED HOSTILE — band RED`);
+          }
         }
       }
     }

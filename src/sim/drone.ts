@@ -42,8 +42,12 @@ export function recallDrone(drone: Drone): void {
 }
 
 export interface DroneStepResult {
-  /** Set on the tick the drone completes its orbit and resolves the target. */
-  resolved?: { trackId: string; resolution: "confirmed-hostile" | "confirmed-decoy" };
+  /**
+   * Set on the tick the drone completes its orbit. "inconclusive" means no
+   * ground-truth entity remained near the snapshot point — the contact
+   * departed during the flight — and the track's band must stay unchanged.
+   */
+  resolved?: { trackId: string; resolution: "confirmed-hostile" | "confirmed-decoy" | "inconclusive" };
   phaseChanged?: Drone["phase"];
 }
 
@@ -104,7 +108,10 @@ export function stepDrone(
     const track = tracks.find((tr) => tr.id === drone.targetTrackId);
     if (track && drone.targetPos) {
       const truth = truthNear(drone.targetPos);
-      const resolution = truth?.kind === "decoy" ? "confirmed-decoy" : "confirmed-hostile";
+      // Absence of evidence is not confirmation: with nothing observable at
+      // the snapshot point, the pass is inconclusive.
+      const resolution =
+        truth === null ? "inconclusive" : truth.kind === "decoy" ? "confirmed-decoy" : "confirmed-hostile";
       result.resolved = { trackId: track.id, resolution };
     }
     drone.phase = "RTB";
